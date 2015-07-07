@@ -1,0 +1,83 @@
+<section cg-busy="{promise:httpRequestPromise,message:'Just a moment'}">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">New category</h3>
+    </div>
+    <div class="panel-body" >
+
+      <form id="form" name="form" novalidate="" ng-submit="submit()">
+        <div class="form-group">
+          <label>New category</label>
+          <input type="text" name="category" ng-model="model.node" required no-special-chars class="form-control" placeholder="Laptops">
+          <div data-ng-messages="form.$submitted && form.category.$error" class="help-block">
+            <div data-ng-message="required">
+              - The <b>category</b> is required.
+            </div>
+            <div data-ng-message="noSpecialChars">
+              - La <b>category</b> must not have special characters.
+            </div>
+          </div>
+        </div>
+      </form>
+
+    </div>
+    <div class="panel-footer">
+      <button form="form" class="btn btn-primary" type="submit">Send</button>
+      <button class="btn btn-warning" ng-click="reset()">Cancel</button>
+    </div>
+  </div>
+
+    <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title" style="line-height: 30px;">Categories     <button ng-click="deleteTree()" type="button" class="btn btn-danger pull-right" style="line-height: normal;">Delete All Categories</button></h3>
+    </div>
+    <div class="panel-body">
+      <tabset justified="true">
+        <tab heading="JqTree">
+          <br>
+          <tree></tree>
+        </tab>
+        <tab heading="JqTree RAW DATA">
+          <br>
+          <pre>{{asJqTreeData | json }}</pre>
+        </tab>
+        <tab heading="Pretty HTML">
+          <br>
+          <section ng-if="nodes.length > 0">
+            <div class="panel panel-default" ng-repeat="node in nodes">
+              <!-- Default panel contents -->
+              <div class="panel-heading" style="line-height: 30px;"><b>$id: </b><span class="label label-primary">{{node.$id}}</span> | <b>$priority: </b> <span class="label label-default">{{(node.$priority == null) ? 'NULL' : node.$priority }}</span> <button ng-click="deleteNode(node)" type="button" class="btn btn-danger pull-right" style="line-height: normal;">Delete</button></div>
+              <!-- Table -->
+              <table class="table">
+                <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Left</th>
+                  <th>Right</th>
+                  <th>parentId</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                  <td>{{node.name}}</td>
+                  <td><b>{{node.left}}</b></td>
+                  <td><b>{{node.right}}</b></td>
+                  <td>{{(node.parentId !== '') ? node.parentId : 'NULL'}}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section ng-if="nodes.length === 0">
+            <h2>There is no categories</h2>
+          </section>
+        </tab>
+        <tab heading="Pretty JSON">
+          <br>
+          <pre>{{nodes | json}}</pre>
+        </tab>
+      </tabset>
+
+    </div>
+  </div>
+</section>

@@ -1,0 +1,16 @@
+<h2>Chat</h2>
+<form>
+  <div class="form-group">
+    <label for="exampleInputPassword1">Message</label>
+    <input type="text" ng-model="newMessage" class="form-control" id="exampleInputPassword1" placeholder="Message...">
+  </div>
+
+  <button type="submit" ng-click="addMessage(newMessage);newMessage = null;" class="btn btn-default">Submit</button>
+
+</form>
+
+<ul id="messages" ng-show="messages.length">
+  <li ng-repeat="message in messages | reverse">{{message.text}}</li>
+</ul>
+
+<p class="alert alert-danger" ng-show="err">{{err}}</p>

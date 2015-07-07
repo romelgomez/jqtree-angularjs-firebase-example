@@ -1,0 +1,40 @@
+{
+  "name": "jqtree-angularjs-firebase-example",
+  "version": "0.0.1",
+  "authors": [
+    "Romel Javier Gomez Herrera <bmxquiksilver7185@gmail.com>"
+  ],
+  "dependencies": {
+    "angular": "v1.4.2-build.4078+sha.33f7f26",
+    "firebase": "2.2.7",
+    "angularfire": "1.1.1",
+    "bootstrap-sass-official": "3.3.5",
+    "angular-animate": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-aria": "1.4.2-build.4078+sha.33f7f26",
+    "angular-cookies": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-messages": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-resource": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-route": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-sanitize": "v1.4.2-build.4078+sha.33f7f26",
+    "angular-pnotify": "~0.0.6",
+    "angular-busy": "4.1.3",
+    "angular-new-router": "0.5.3",
+    "angular-uuid-service": "^0.1.0",
+    "angular-validation-match": "~1.5.0",
+    "underscore": "1.8.3",
+    "angular-bootstrap": "0.13.0",
+    "dropzone": "4.0.1",
+    "font-awesome": "4.3.0",
+    "hover": "2.0.2",
+    "pnotify": "2.0.1",
+    "uri.js": "~1.15.1",
+    "ui.bootstrap": "0.13.0",
+    "jqtree": "1.1.0"
+  },
+  "devDependencies": {
+    "mockfirebase": "0.11.0",
+    "angular-mocks": "1.4.2-build.4078+sha.33f7f26"
+  },
+  "appPath": "app",
+  "moduleName": "marketplaceApp"
+}

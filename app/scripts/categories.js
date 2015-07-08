@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
-  .factory('tree',['$q','$firebaseArray','FireRef','notificationService',function($q,$firebaseArray,FireRef,notificationService){
+  .factory('tree',['$q','$firebaseArray','FireRef','notificationService','$log',function($q,$firebaseArray,FireRef,notificationService,$log){
 
     var treeRef = function(){
       return FireRef.child('tree');
@@ -54,24 +54,34 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         return $firebaseArray(treeRef().orderByChild('left'));
       },
       updateAllTree:function(newTree){
+        var deferred = $q.defer();
+        var promise = deferred.promise;
         var ref = treeRef();
         ref.set(newTree, function(error) {
           if (error) {
             notificationService.error(error);
+            deferred.reject();
           } else {
             notificationService.success('The tree or nodes has been update');
+            deferred.resolve();
           }
         });
+        return promise;
       },
       deleteAllTree: function(){
+        var deferred = $q.defer();
+        var promise = deferred.promise;
         var onComplete = function(error) {
           if (error) {
             notificationService.error(error);
+            deferred.reject();
           } else {
             notificationService.success('The tree or nodes has been deleted');
+            deferred.resolve();
           }
         };
         treeRef().remove(onComplete);
+        return promise;
       },
       /**
        @Name        sourceDataAsJqTreeData
@@ -145,6 +155,82 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
           });
         };
         fix(tree);
+      },
+      /**
+       @Name              excludeNode
+       @Description       Recursive Method, Exclude node delete.
+       @parameters        {tree: object, nodeId:  'string, id of node', branch: 'bolean, delete children nodes too'}
+       @returns           object; .targetTree: tree with deleted node's already excluded; .recordsIdsForDelete: id of records to delete;
+       */
+      excludeNode : function(tree,nodeId,branch){
+        var result = {
+          targetTree: [],
+          recordsIdsForDelete:[]
+        };
+        var getRecordsIdsForDelete = function(deleteNode){
+          var result = [];
+          result.push(deleteNode.id);
+          var process = function(node){
+            angular.forEach(node, function (current_node) {
+              result.push(current_node.id);
+              if(current_node.children.length > 0){
+                process(current_node.children);
+              }
+            });
+          };
+          process(deleteNode.children);
+          return result;
+        };
+        var process = function(tree){
+          angular.forEach(tree, function (node) {
+            if(node.id == nodeId){
+              if(node.children.length > 0){
+                if(branch == true){
+                  // delete node and children
+                  result.recordsIdsForDelete = getRecordsIdsForDelete(node);
+                }else{
+                  // Keep children
+                  result.recordsIdsForDelete.push(node.id);
+                  if(node.parentId == ''){
+                    for(var i = 0; i < node.children.length; i++){
+                      node.children[i].parentId = '';
+                    }
+                  }else{
+                    for(var e = 0; e < node.children.length; e++){
+                      node.children[e].parentId = node.parentId;
+                    }
+                  }
+                  process(node.children);
+                }
+              }else{
+                result.recordsIdsForDelete.push(node.id);
+              }
+            }else{
+              var new_node = {
+                id:             node.id,
+                parentId:       node.parentId,
+                name:           node.label,
+                left:           node.left,
+                right:          node.right,
+                children:       []
+              };
+              if(node.parentId !== ''){
+                // Is child node
+                // Función recursiva
+                insertChildNode(result.targetTree,new_node);
+              }else{
+                // Is root node
+                // Se inserta el nodo directamente
+                result.targetTree.push(new_node);
+              }
+              if(node.children !== undefined){
+                process(node.children);
+              }
+            }
+          });
+        };
+        process(tree);
+        return result;
       }
     };
 
@@ -154,7 +240,6 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
 
     return {
       restrict:'E',
-      scope: {},
       replace:true,
       template:'<div><div/>',
       link:function(scope,element){
@@ -204,7 +289,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
           var proposalTree = angular.fromJson(element.tree('toJson'));
           tree.normalize(proposalTree);
           var newTree = tree.prepareDataForFireBase(proposalTree);
-          tree.updateAllTree(newTree);
+          scope.updateAllTree(newTree);
         });
 
         /**
@@ -226,14 +311,15 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
          */
         nodes.$watch(function(){
           replaceWholeTree(element,tree.sourceDataAsJqTreeData(nodes));
-          $log.log('/*/*/*/*/*/*/*/*/*/*/*/*/ replaceWholeTree() function It executed as many time is the length of Array in the initial loading of data  /*/*/*/*/*/*/*/*/*/*/*/');
         });
 
       }
     };
 
   }])
-  .controller('TreeController',['$scope','notificationService','$window','tree','$log',function($scope,notificationService,$window,tree,$log){
+  .controller('TreeController',['$scope','notificationService','tree','$modal','$log',function($scope,notificationService,tree,$modal,$log){
+
+    $scope.requestPromise = $scope.httpRequestPromise;
 
     $scope.nodes = tree.nodes();
 
@@ -258,12 +344,27 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     $scope.deleteTree = function(){
-      tree.deleteAllTree();
+      $scope.httpRequestPromise = tree.deleteAllTree();
     };
 
-    $scope.deleteNode = function(record){
-      $log.log('record',record);
-      notificationService.error('Under construction');
+    $scope.deleteNode = function(node){
+      var modalInstance = $modal.open({
+        templateUrl: 'deleteNode.html',
+        controller: 'DeleteNodeController',
+        resolve: {
+          node: function () {
+            return node;
+          }
+        }
+      });
+      modalInstance.result.then(function(branch){
+        var newData = tree.excludeNode($scope.asJqTreeData,node.$id,branch);
+        tree.normalize(newData.targetTree);
+        var newTree = tree.prepareDataForFireBase(newData.targetTree);
+        $scope.httpRequestPromise = tree.updateAllTree(newTree);
+      }, function (error) {
+        notificationService.error(error);
+      });
     };
 
     $scope.submit = function () {
@@ -297,6 +398,28 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         });
 
       }
+    };
+
+    $scope.updateAllTree = function (newTree){
+      $scope.httpRequestPromise = tree.updateAllTree(newTree)
+    };
+
+
+  }])
+  .controller('DeleteNodeController',['$scope','$modalInstance','node',function($scope,$modalInstance,node){
+
+    $scope.node           = node;
+    $scope.branchCheckBox = (($scope.node.left+1) !== ($scope.node.right));
+    $scope.model = {
+      branch: null
+    };
+
+    $scope.confirm  = function () {
+      $modalInstance.close($scope.model.branch);
+    };
+
+    $scope.cancel   = function () {
+      $modalInstance.dismiss('this has be cancel');
     };
 
   }]);

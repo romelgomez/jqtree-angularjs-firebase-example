@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
-  .factory('tree',['$q','$firebaseArray','FireRef','notificationService',function($q,$firebaseArray,FireRef,notificationService){
+  .factory('treeService',['$q','$firebaseArray','FireRef','notificationService',function($q,$firebaseArray,FireRef,notificationService){
 
     var treeRef = function(){
       return FireRef.child('tree');
@@ -224,7 +224,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
 
 
   }])
-  .directive('tree',['$templateCache','$compile','tree','$log',function($templateCache,$compile,tree,$log){
+  .directive('tree',['$templateCache','$compile','treeService','$log',function($templateCache,$compile,treeService,$log){
 
     return {
       restrict:'E',
@@ -273,8 +273,8 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
           event.preventDefault();
           event.move_info.do_move(); // jshint ignore:line
           var proposalTree = angular.fromJson(element.tree('toJson'));
-          tree.normalize(proposalTree);
-          var newTree = tree.prepareDataForFireBase(proposalTree);
+          treeService.normalize(proposalTree);
+          var newTree = treeService.prepareDataForFireBase(proposalTree);
           scope.updateAllTree(newTree);
         });
 
@@ -289,27 +289,27 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         /**
          * The real time data front fireBase
          */
-        var nodes = tree.nodes();
+        var nodes = treeService.nodes();
 
         /**
          * Observing changes in nodes var, which has first [] empty array, after some time is get server data.
          */
         nodes.$watch(function(){
-          replaceWholeTree(element,tree.sourceDataAsJqTreeData(nodes));
+          replaceWholeTree(element,treeService.sourceDataAsJqTreeData(nodes));
         });
 
       }
     };
 
   }])
-  .controller('TreeController',['$scope','notificationService','tree','$modal',function($scope,notificationService,tree,$modal){
+  .controller('TreeController',['$scope','notificationService','treeService','$modal',function($scope,notificationService,treeService,$modal){
 
-    $scope.nodes = tree.nodes();
+    $scope.nodes = treeService.nodes();
 
     $scope.asJqTreeData = [];
 
     $scope.nodes.$watch(function () {
-      $scope.asJqTreeData = tree.sourceDataAsJqTreeData($scope.nodes);
+      $scope.asJqTreeData = treeService.sourceDataAsJqTreeData($scope.nodes);
     });
 
     $scope.httpRequestPromise = $scope.nodes.$loaded(null,function(error){
@@ -327,7 +327,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     $scope.deleteTree = function(){
-      $scope.httpRequestPromise = tree.deleteAllTree();
+      $scope.httpRequestPromise = treeService.deleteAllTree();
     };
 
     $scope.deleteNode = function(node){
@@ -341,10 +341,10 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         }
       });
       modalInstance.result.then(function(branch){
-        var newData = tree.excludeNode($scope.asJqTreeData,node.$id,branch);
-        tree.normalize(newData.targetTree);
-        var newTree = tree.prepareDataForFireBase(newData.targetTree);
-        $scope.httpRequestPromise = tree.updateAllTree(newTree);
+        var newData = treeService.excludeNode($scope.asJqTreeData,node.$id,branch);
+        treeService.normalize(newData.targetTree);
+        var newTree = treeService.prepareDataForFireBase(newData.targetTree);
+        $scope.httpRequestPromise = treeService.updateAllTree(newTree);
       }, function (error) {
         notificationService.error(error);
       });
@@ -384,7 +384,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     $scope.updateAllTree = function (newTree){
-      $scope.httpRequestPromise = tree.updateAllTree(newTree);
+      $scope.httpRequestPromise = treeService.updateAllTree(newTree);
     };
 
 

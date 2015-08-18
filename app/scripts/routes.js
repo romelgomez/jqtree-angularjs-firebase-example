@@ -59,10 +59,6 @@ angular.module('routes',['ngRoute'])
   .config(['$routeProvider', function($routeProvider) {
     $routeProvider
       .when('/', {
-        templateUrl: 'views/main.html',
-        controller: 'MainController'
-      })
-      .when('/categories', {
         templateUrl: 'views/categories.html',
         controller: 'TreeController'
       })

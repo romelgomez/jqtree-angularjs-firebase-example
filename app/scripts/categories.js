@@ -1,19 +1,16 @@
 'use strict';
 
 angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
-  .factory('tree',['$q','$firebaseArray','FireRef','notificationService','$log',function($q,$firebaseArray,FireRef,notificationService,$log){
+  .factory('tree',['$q','$firebaseArray','FireRef','notificationService',function($q,$firebaseArray,FireRef,notificationService){
 
     var treeRef = function(){
       return FireRef.child('tree');
     };
 
     /**
-     @Name          packAsJqTreeNode
-     @visibility    Private
-     @Description   Source node is packed as JqTree node.
-     @parameters    {sourceNode: object}
-     @return        Object
-     @implementedBy sourceDataAsJqTreeData();
+     * Source node is packed as JqTree node. ImplementedBy sourceDataAsJqTreeData();
+     * @param {Object} sourceNode
+     * @return {Object}
      */
     var packAsJqTreeNode = function(sourceNode){
       var node = {};
@@ -27,12 +24,10 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     /**
-     @Name          insertChildNode
-     @visibility    Private
-     @Description   Recursive Method; Is like push(), only that this function completely traverses the tree looking for the father to the son or node.
-     @parameters    {targetTree: Array,childNode: Object}
-     @returns       null
-     @implementedBy sourceDataAsJqTreeData();
+     * Recursive Method; Is like push(), only that this function completely traverses the tree looking for the father to the son or node. implemented by sourceDataAsJqTreeData();
+     * @param {Array} targetTree
+     * @param {Object} childNode
+     * @return {Undefined}
      */
     var insertChildNode = function(targetTree,childNode){
       angular.forEach(targetTree,function(node){
@@ -47,9 +42,6 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     return {
-      ref:function(){
-        return treeRef();
-      },
       nodes:function(){
         return $firebaseArray(treeRef().orderByChild('left'));
       },
@@ -84,10 +76,9 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         return promise;
       },
       /**
-       @Name        sourceDataAsJqTreeData
-       @Description Recursive Function, Format source data array as JqTree data.
-       @parameters  {sourceData: Array}
-       @returns     Array
+       * Recursive Function, Format source data array as JqTree data.
+       * @param {Array} sourceData
+       * @returns {Array}
        */
       sourceDataAsJqTreeData: function(sourceData){
         var targetTree = [];
@@ -104,11 +95,9 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         return targetTree;
       },
       /**
-       @Name              prepareDataForFireBase
-       @Description       Recursive Method, Prepare data for FireBase data store.
-       @parameters        {tree: object}
-       @returns           object
-       @implementedBy    deleteCategory(), treeMove();
+       * Recursive Method, Prepare data for FireBase data store. Implemented by deleteCategory(), treeMove();
+       * @param {Object} tree
+       * @return {Object}
        */
       prepareDataForFireBase: function(tree){
         var nodes = {};
@@ -128,11 +117,9 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         return nodes;
       },
       /**
-       @Name            normalize
-       @Description     Recursive Method, Fix .left and .right values of node of tree.
-       @parameters      {tree:object}
-       @returns         Null
-       @implementedBy   deleteCategory(), treeMove();
+       * Recursive Method, Fix .left and .right values of node of tree. Implemented by: deleteCategory(), treeMove();
+       * @param {Object} tree
+       * @return {Undefined}
        */
       normalize: function(tree){
         var count;
@@ -157,10 +144,11 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         fix(tree);
       },
       /**
-       @Name              excludeNode
-       @Description       Recursive Method, Exclude node delete.
-       @parameters        {tree: object, nodeId:  'string, id of node', branch: 'bolean, delete children nodes too'}
-       @returns           object; .targetTree: tree with deleted node's already excluded; .recordsIdsForDelete: id of records to delete;
+       * Recursive Method, Exclude node delete.
+       * @param {Object} tree
+       * @param {String} nodeId, id of node
+       * @param {Boolean} branch, delete children nodes too
+       * @return {Object} .targetTree: tree with deleted node's already excluded; .recordsIdsForDelete: id of records to delete;
        */
       excludeNode : function(tree,nodeId,branch){
         var result = {
@@ -171,10 +159,10 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
           var result = [];
           result.push(deleteNode.id);
           var process = function(node){
-            angular.forEach(node, function (current_node) {
-              result.push(current_node.id);
-              if(current_node.children.length > 0){
-                process(current_node.children);
+            angular.forEach(node, function (currentNode) {
+              result.push(currentNode.id);
+              if(currentNode.children.length > 0){
+                process(currentNode.children);
               }
             });
           };
@@ -183,15 +171,15 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         };
         var process = function(tree){
           angular.forEach(tree, function (node) {
-            if(node.id == nodeId){
+            if(node.id === nodeId){
               if(node.children.length > 0){
-                if(branch == true){
+                if(branch === true){
                   // delete node and children
                   result.recordsIdsForDelete = getRecordsIdsForDelete(node);
                 }else{
                   // Keep children
                   result.recordsIdsForDelete.push(node.id);
-                  if(node.parentId == ''){
+                  if(node.parentId === ''){
                     for(var i = 0; i < node.children.length; i++){
                       node.children[i].parentId = '';
                     }
@@ -206,7 +194,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
                 result.recordsIdsForDelete.push(node.id);
               }
             }else{
-              var new_node = {
+              var newNode = {
                 id:             node.id,
                 parentId:       node.parentId,
                 name:           node.label,
@@ -217,11 +205,11 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
               if(node.parentId !== ''){
                 // Is child node
                 // Función recursiva
-                insertChildNode(result.targetTree,new_node);
+                insertChildNode(result.targetTree,newNode);
               }else{
                 // Is root node
                 // Se inserta el nodo directamente
-                result.targetTree.push(new_node);
+                result.targetTree.push(newNode);
               }
               if(node.children !== undefined){
                 process(node.children);
@@ -245,11 +233,10 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
       link:function(scope,element){
 
         /**
-         @Name            displayJqTreeData
-         @Description     Display initially JqTree Data.
-         @parameters      {element: reference of DOM element, data: object}
-         @returns         null
-         @implementedBy
+         * Display initially JqTree Data.
+         * @param {Element} element, reference of DOM element
+         * @param {Object} data
+         * @return undefined
          */
         var displayJqTreeData = function(element,data){
           var options = {
@@ -264,11 +251,10 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         };
 
         /**
-         @Name         replaceWholeTree
-         @Description  Replace whole Tree.
-         @parameters   {element: reference of DOM element, data: object}
-         @returns      null
-         @implementedBy -> newCategory(), editCategoryName(), deleteCategory(), treeMove()
+         * Replace whole Tree. Implemented By: newCategory(), editCategoryName(), deleteCategory(), treeMove()
+         * @param {Element} element, reference of DOM element
+         * @param {Object} data
+         * @return undefined
          */
         var replaceWholeTree = function(element,data){
           element.tree('loadData', data);
@@ -276,16 +262,16 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
 
 
         /**
-         @Description   Displaying initially Data, which is []
+         * Displaying initially Data, which is []
          */
         displayJqTreeData(element,[]);
 
         /**
-         @Description   Observing the move event
+         * Observing the move event
          */
         element.bind('tree.move',function(event) {
           event.preventDefault();
-          event.move_info.do_move();
+          event.move_info.do_move(); // jshint ignore:line
           var proposalTree = angular.fromJson(element.tree('toJson'));
           tree.normalize(proposalTree);
           var newTree = tree.prepareDataForFireBase(proposalTree);
@@ -293,7 +279,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         });
 
         /**
-         @Description   Observing the select event
+         * Observing the select event
          */
         element.bind('tree.select',function(event) {
             $log.log('event.node',event.node);
@@ -301,13 +287,12 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         );
 
         /**
-         @Name          nodes
-         @Description   The real time data front fireBase
+         * The real time data front fireBase
          */
         var nodes = tree.nodes();
 
         /**
-         @Description   Observing changes in nodes var, which has first [] empty array, after some time is get server data.
+         * Observing changes in nodes var, which has first [] empty array, after some time is get server data.
          */
         nodes.$watch(function(){
           replaceWholeTree(element,tree.sourceDataAsJqTreeData(nodes));
@@ -317,9 +302,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
   }])
-  .controller('TreeController',['$scope','notificationService','tree','$modal','$log',function($scope,notificationService,tree,$modal,$log){
-
-    $scope.requestPromise = $scope.httpRequestPromise;
+  .controller('TreeController',['$scope','notificationService','tree','$modal',function($scope,notificationService,tree,$modal){
 
     $scope.nodes = tree.nodes();
 
@@ -390,7 +373,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
         };
 
         $scope.httpRequestPromise = $scope.nodes.$add(node).then(function() {
-          notificationService.success('Data has been saved to our Firebase database');
+          notificationService.success('Data has been saved to our FireBase database');
           $scope.reset();
         },function(error){
           notificationService.error(error);
@@ -401,7 +384,7 @@ angular.module('tree',['ngMessages','cgBusy','jlareau.pnotify'])
     };
 
     $scope.updateAllTree = function (newTree){
-      $scope.httpRequestPromise = tree.updateAllTree(newTree)
+      $scope.httpRequestPromise = tree.updateAllTree(newTree);
     };
 
 
